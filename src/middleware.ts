@@ -9,7 +9,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 // Rotas que requerem autenticação
-const PROTECTED_ROUTES = ['/dashboard', '/admin', '/aluno', '/perfil']
+const PROTECTED_ROUTES = ['/admin', '/aluno', '/perfil']
 
 // Rotas apenas para não autenticados (redireciona para dashboard se já logado)
 const AUTH_ROUTES = ['/login']
@@ -41,7 +41,7 @@ export function middleware(request: NextRequest): NextResponse {
 
   // Redirecionar para dashboard se já autenticado tentando acessar login
   if (isAuthRoute && sessionActive) {
-    return NextResponse.redirect(new URL('/dashboard', request.url))
+    return NextResponse.redirect(new URL('/aluno/dashboard', request.url))
   }
 
   // Headers de segurança adicionais
