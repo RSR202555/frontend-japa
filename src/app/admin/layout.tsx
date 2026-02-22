@@ -36,13 +36,17 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     }
   }, [isLoading, isAuthenticated, isAdmin, router])
 
-  if (isLoading || !isAuthenticated || !isAdmin) {
+  // Enquanto carrega, mostra spinner
+  if (isLoading) {
     return (
       <div className="min-h-dvh flex items-center justify-center bg-neutral-50">
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-brand-500 border-t-transparent" />
       </div>
     )
   }
+
+  // Sem sessão ou sem permissão — o useEffect acima faz o redirect; não bloqueia aqui
+  if (!isAuthenticated || !isAdmin) return null
 
   async function handleLogout() {
     await logout()
