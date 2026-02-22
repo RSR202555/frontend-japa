@@ -9,7 +9,7 @@ import {
   CreditCard,
   MessageSquare,
   LogOut,
-  Settings,
+  ClipboardList,
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { cn } from '@/lib/utils'
@@ -17,6 +17,7 @@ import { cn } from '@/lib/utils'
 const adminNav = [
   { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/admin/alunos', label: 'Alunos', icon: Users },
+  { href: '/admin/protocolos', label: 'Protocolos', icon: ClipboardList },
   { href: '/admin/planos', label: 'Planos', icon: CreditCard },
   { href: '/admin/chat', label: 'Mensagens', icon: MessageSquare },
 ]
@@ -36,7 +37,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     }
   }, [isLoading, isAuthenticated, isAdmin, router])
 
-  // Enquanto carrega, mostra spinner
   if (isLoading) {
     return (
       <div className="min-h-dvh flex items-center justify-center bg-neutral-50">
@@ -45,7 +45,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     )
   }
 
-  // Sem sessão ou sem permissão — o useEffect acima faz o redirect; não bloqueia aqui
   if (!isAuthenticated || !isAdmin) return null
 
   async function handleLogout() {
@@ -72,7 +71,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <nav className="flex-1 p-4 space-y-1">
           {adminNav.map((item) => {
             const Icon = item.icon
-            const active = pathname === item.href
+            const active = pathname.startsWith(item.href)
             return (
               <Link
                 key={item.href}

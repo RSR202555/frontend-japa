@@ -11,6 +11,7 @@ import {
   Camera,
   MessageSquare,
   ClipboardList,
+  Dumbbell,
   LogOut,
   User,
   Menu,
@@ -22,6 +23,7 @@ import { cn } from '@/lib/utils'
 
 const navItems = [
   { href: '/aluno/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/aluno/treino', label: 'Meu Treino', icon: Dumbbell },
   { href: '/aluno/anamnese', label: 'Anamnese', icon: ClipboardList },
   { href: '/aluno/metas', label: 'Metas', icon: Target },
   { href: '/aluno/refeicoes', label: 'Refeições', icon: UtensilsCrossed },
