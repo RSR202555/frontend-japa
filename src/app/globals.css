@@ -246,6 +246,8 @@
 
   /* Spinner */
   .spinner-accent {
+    width: 24px;
+    height: 24px;
     border: 2px solid var(--border-mid);
     border-top-color: var(--accent);
     border-radius: 50%;

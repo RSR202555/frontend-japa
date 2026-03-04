@@ -30,8 +30,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   useEffect(() => {
     if (!isLoading) {
-      if (!isAuthenticated) router.replace('/login')
-      else if (!isAdmin)    router.replace('/aluno/dashboard')
+      if (!isAuthenticated) {
+        // Limpa o cookie de sessão para evitar loop com o middleware
+        document.cookie = 'session_active=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
+        router.replace('/login')
+      } else if (!isAdmin) {
+        router.replace('/aluno/dashboard')
+      }
     }
   }, [isLoading, isAuthenticated, isAdmin, router])
 
