@@ -35,28 +35,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return
     }
     getMe()
-      .then((userData) => {
-        setUser(userData)
-        document.cookie = 'session_active=1; path=/; samesite=strict'
-      })
-      .catch(() => {
-        clearToken()
-        document.cookie = 'session_active=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
-      })
+      .then((userData) => setUser(userData))
+      .catch(() => clearToken())
       .finally(() => setIsLoading(false))
   }, [])
 
   const login = useCallback((token: string, userData: User) => {
     setToken(token)
     setUser(userData)
-    document.cookie = 'session_active=1; path=/; samesite=strict'
   }, [])
 
   const logout = useCallback(async () => {
     await authLogout()
     setUser(null)
     clearToken()
-    document.cookie = 'session_active=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
   }, [])
 
   const refreshUser = useCallback(async () => {

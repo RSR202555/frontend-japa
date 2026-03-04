@@ -37,11 +37,7 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      // Limpa o cookie de sessão para evitar loop com o middleware
-      document.cookie = 'session_active=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
-      router.replace('/login')
-    }
+    if (!isLoading && !isAuthenticated) router.replace('/login')
   }, [isLoading, isAuthenticated, router])
 
   if (isLoading || !isAuthenticated) {
