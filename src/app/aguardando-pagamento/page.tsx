@@ -1,11 +1,11 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useMemo, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Clock, Mail, ExternalLink } from 'lucide-react'
 
-export default function AguardandoPagamentoPage() {
+function WaitingContent() {
   const searchParams = useSearchParams()
 
   const receiptUrl = searchParams.get('receipt_url')
@@ -136,5 +136,25 @@ export default function AguardandoPagamentoPage() {
         </p>
       </div>
     </main>
+  )
+}
+
+export default function AguardandoPagamentoPage() {
+  return (
+    <Suspense fallback={
+      <main className="min-h-dvh flex items-center justify-center bg-brand-soft px-4 py-12">
+        <div className="w-full max-w-md text-center">
+          <div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-gradient shadow-lg mb-6">
+            <span className="text-white font-bold text-xl">JT</span>
+          </div>
+          <div className="animate-pulse">
+            <div className="h-8 w-48 bg-neutral-200 rounded mx-auto mb-4"></div>
+            <div className="h-4 w-32 bg-neutral-200 rounded mx-auto"></div>
+          </div>
+        </div>
+      </main>
+    }>
+      <WaitingContent />
+    </Suspense>
   )
 }
