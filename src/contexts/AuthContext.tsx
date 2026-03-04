@@ -4,11 +4,12 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useState,
   type ReactNode,
 } from 'react'
 import type { User } from '@/types'
-import { clearToken, setToken } from '@/lib/api'
+import { clearToken, hasToken, setToken } from '@/lib/api'
 import { getMe, isAdmin, logout as authLogout } from '@/lib/auth'
 
 interface AuthContextValue {
@@ -24,21 +25,37 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | null>(null)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null)
-  const [isLoading, setIsLoading] = useState(false)
+  const [user, setUser]       = useState<User | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+
+  // Restaura a sessão no reload se houver token salvo
+  useEffect(() => {
+    if (!hasToken()) {
+      setIsLoading(false)
+      return
+    }
+    getMe()
+      .then((userData) => {
+        setUser(userData)
+        document.cookie = 'session_active=1; path=/; samesite=strict'
+      })
+      .catch(() => {
+        clearToken()
+        document.cookie = 'session_active=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
+      })
+      .finally(() => setIsLoading(false))
+  }, [])
 
   const login = useCallback((token: string, userData: User) => {
     setToken(token)
     setUser(userData)
-    // Definir cookie não-sensível para o middleware verificar sessão ativa
-    document.cookie = 'session_active=1; path=/; samesite=strict; secure'
+    document.cookie = 'session_active=1; path=/; samesite=strict'
   }, [])
 
   const logout = useCallback(async () => {
     await authLogout()
     setUser(null)
     clearToken()
-    // Remover cookie de sessão
     document.cookie = 'session_active=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
   }, [])
 
@@ -50,8 +67,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(null)
     }
   }, [])
-
-  // Token fica em memória — sem restore assíncrono, isLoading inicia como false
 
   return (
     <AuthContext.Provider

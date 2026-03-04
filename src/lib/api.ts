@@ -58,24 +58,36 @@ api.interceptors.response.use(
   }
 )
 
-// ==================== TOKEN EM MEMÓRIA (mais seguro que localStorage) ====================
-// O token fica na memória JS da sessão — perdido ao fechar a aba (comportamento correto)
+// ==================== TOKEN (memória + localStorage para persistência) ====================
+const TOKEN_KEY = 'jt_token'
 let _tokenMemory: string | null = null
 
 export function setToken(token: string): void {
   _tokenMemory = token
+  if (typeof window !== 'undefined') {
+    localStorage.setItem(TOKEN_KEY, token)
+  }
 }
 
 export function getTokenFromMemory(): string | null {
-  return _tokenMemory
+  if (_tokenMemory) return _tokenMemory
+  if (typeof window !== 'undefined') {
+    const stored = localStorage.getItem(TOKEN_KEY)
+    if (stored) { _tokenMemory = stored }
+    return stored
+  }
+  return null
 }
 
 export function clearToken(): void {
   _tokenMemory = null
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem(TOKEN_KEY)
+  }
 }
 
 export function hasToken(): boolean {
-  return _tokenMemory !== null
+  return getTokenFromMemory() !== null
 }
 
 export default api
