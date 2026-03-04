@@ -1,7 +1,28 @@
+'use client'
+
+import { useMemo } from 'react'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { Clock, Mail, CheckCircle2 } from 'lucide-react'
+import { Clock, Mail, ExternalLink } from 'lucide-react'
 
 export default function AguardandoPagamentoPage() {
+  const searchParams = useSearchParams()
+
+  const receiptUrl = searchParams.get('receipt_url')
+  const orderNsu = searchParams.get('order_nsu')
+  const slug = searchParams.get('slug')
+  const captureMethod = searchParams.get('capture_method')
+  const transactionNsu = searchParams.get('transaction_nsu')
+
+  const details = useMemo(() => {
+    const parts: Array<{ label: string; value: string }> = []
+    if (orderNsu) parts.push({ label: 'Pedido', value: orderNsu })
+    if (captureMethod) parts.push({ label: 'Método', value: captureMethod })
+    if (slug) parts.push({ label: 'Fatura', value: slug })
+    if (transactionNsu) parts.push({ label: 'Transação', value: transactionNsu })
+    return parts
+  }, [orderNsu, captureMethod, slug, transactionNsu])
+
   return (
     <main className="min-h-dvh flex items-center justify-center bg-brand-soft px-4 py-12">
       <div className="w-full max-w-md animate-fade-in text-center">
@@ -19,10 +40,36 @@ export default function AguardandoPagamentoPage() {
         </div>
 
         <h1 className="text-2xl font-bold text-neutral-900 mb-2">Aguardando pagamento</h1>
-        <p className="text-neutral-500 text-sm mb-8">
-          Você foi redirecionado para a página de pagamento da InfinityPay.
-          Complete o pagamento por lá para ativar sua conta.
+        <p className="text-neutral-500 text-sm mb-6">
+          Se você já finalizou o pagamento, aguarde alguns instantes para a confirmação automática.
         </p>
+
+        {(receiptUrl || details.length > 0) && (
+          <div className="card p-4 text-left space-y-3 mb-6">
+            <p className="text-sm font-semibold text-neutral-800">Detalhes do pagamento</p>
+            {details.length > 0 && (
+              <div className="space-y-2">
+                {details.map((d) => (
+                  <div key={d.label} className="flex items-center justify-between gap-3">
+                    <span className="text-xs text-neutral-500">{d.label}</span>
+                    <span className="text-xs text-neutral-700 font-medium truncate max-w-[220px]">{d.value}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+            {receiptUrl && (
+              <a
+                href={receiptUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="btn-secondary w-full justify-center"
+              >
+                <ExternalLink size={16} />
+                Ver comprovante
+              </a>
+            )}
+          </div>
+        )}
 
         <div className="card p-6 text-left space-y-4 mb-6">
           <h2 className="font-semibold text-neutral-800">O que acontece após o pagamento?</h2>
@@ -73,8 +120,11 @@ export default function AguardandoPagamentoPage() {
         </div>
 
         <div className="flex flex-col gap-3">
-          <Link href="/checkout" className="btn-ghost w-full justify-center">
-            Voltar ao checkout
+          <Link href="/aluno/dashboard" className="btn-primary w-full justify-center">
+            Ir para o dashboard
+          </Link>
+          <Link href="/aluno/planos" className="btn-ghost w-full justify-center">
+            Ver planos
           </Link>
           <Link href="/login" className="text-sm text-neutral-500 hover:text-neutral-700">
             Já ativei minha conta — Entrar

@@ -22,9 +22,11 @@ export default function PlansPage() {
   async function handleSubscribe(planId: number) {
     setSubscribing(planId)
     try {
-      const res = await api.post<{ payment_url: string }>('/student/subscribe', { plan_id: planId })
-      // Redirecionar para a URL de pagamento da Infinity Pay
-      window.location.href = res.data.payment_url
+      const res = await api.post<{ checkout_url: string | null; order_nsu: string }>('/student/checkout/infinitepay', { plan_id: planId })
+      if (!res.data.checkout_url) {
+        throw new Error('Missing checkout_url')
+      }
+      window.location.href = res.data.checkout_url
     } catch (err) {
       console.error(err)
       alert('Erro ao processar. Tente novamente.')
