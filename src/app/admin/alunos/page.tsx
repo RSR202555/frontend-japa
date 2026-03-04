@@ -1,33 +1,54 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
-import { Search, UserCheck, UserX, ChevronRight } from 'lucide-react'
+import { Search, UserCheck, UserX, ChevronRight, UserPlus } from 'lucide-react'
 import api from '@/lib/api'
-import { cn, formatDate } from '@/lib/utils'
+import { formatDate } from '@/lib/utils'
 import type { User, PaginatedResponse } from '@/types'
+import NovoAlunoModal from '@/components/admin/NovoAlunoModal'
+
+function badgeStyle(color: string): React.CSSProperties {
+  return {
+    display:       'inline-flex',
+    alignItems:    'center',
+    padding:       '3px 10px',
+    fontSize:      10,
+    fontWeight:    700,
+    textTransform: 'uppercase',
+    letterSpacing: '0.1em',
+    color,
+    border:        `1px solid ${color}`,
+    background:    `${color}18`,
+    fontFamily:    'var(--font-sans)',
+  }
+}
 
 export default function StudentsPage() {
-  const [users, setUsers] = useState<User[]>([])
-  const [loading, setLoading] = useState(true)
-  const [search, setSearch] = useState('')
+  const [users, setUsers]                     = useState<User[]>([])
+  const [loading, setLoading]                 = useState(true)
+  const [search, setSearch]                   = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
+  const [modalOpen, setModalOpen]             = useState(false)
 
   useEffect(() => {
     const timeout = setTimeout(() => setDebouncedSearch(search), 400)
     return () => clearTimeout(timeout)
   }, [search])
 
-  useEffect(() => {
+  const loadUsers = useCallback((searchTerm: string) => {
     setLoading(true)
     const params = new URLSearchParams()
-    if (debouncedSearch) params.set('search', debouncedSearch)
-
+    if (searchTerm) params.set('search', searchTerm)
     api.get<{ data: User[]; meta: PaginatedResponse<User>['meta'] }>(`/admin/users?${params}`)
       .then((res) => setUsers(res.data.data))
       .catch(console.error)
       .finally(() => setLoading(false))
-  }, [debouncedSearch])
+  }, [])
+
+  useEffect(() => {
+    loadUsers(debouncedSearch)
+  }, [debouncedSearch, loadUsers])
 
   async function toggleActive(user: User) {
     await api.patch(`/admin/users/${user.id}/toggle-active`)
@@ -37,87 +58,130 @@ export default function StudentsPage() {
   }
 
   return (
-    <div className="space-y-6 animate-slide-up">
-      <div>
-        <h1 className="page-title">Alunos</h1>
-        <p className="page-subtitle">{users.length} aluno{users.length !== 1 ? 's' : ''}</p>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+        <div>
+          <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(22px,3vw,32px)', color: '#F5F0E8', letterSpacing: '0.04em', textTransform: 'uppercase', margin: 0, lineHeight: 1 }}>
+            Alunos
+          </h1>
+          <p style={{ fontSize: 13, color: '#555', marginTop: 4, fontFamily: 'var(--font-sans)' }}>
+            {users.length} aluno{users.length !== 1 ? 's' : ''} cadastrado{users.length !== 1 ? 's' : ''}
+          </p>
+        </div>
+        <button
+          onClick={() => setModalOpen(true)}
+          style={{
+            display: 'flex', alignItems: 'center', gap: 8, padding: '10px 20px',
+            background: '#5B8CF5', border: 'none', color: '#fff',
+            fontSize: 13, fontWeight: 700, fontFamily: 'var(--font-sans)',
+            cursor: 'pointer', letterSpacing: '0.03em', transition: 'background 0.15s',
+          }}
+          onMouseEnter={e => (e.currentTarget.style.background = '#4A7CF3')}
+          onMouseLeave={e => (e.currentTarget.style.background = '#5B8CF5')}
+        >
+          <UserPlus size={15} /> Novo aluno
+        </button>
       </div>
 
       {/* Search */}
-      <div className="relative max-w-sm">
-        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
+      <div style={{ position: 'relative', maxWidth: 360 }}>
+        <Search size={15} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#444', pointerEvents: 'none' }} />
         <input
           type="search"
           placeholder="Buscar por nome ou e-mail..."
-          className="input pl-9"
+          className="input"
+          style={{ paddingLeft: 38 }}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
       </div>
 
       {/* Table */}
-      <div className="card overflow-hidden">
+      <div style={{ background: '#111', border: '1px solid #1e1e1e', overflow: 'hidden' }}>
         {loading ? (
-          <div className="p-8 flex justify-center">
-            <div className="h-6 w-6 animate-spin rounded-full border-2 border-brand-500 border-t-transparent" />
+          <div style={{ padding: 40, display: 'flex', justifyContent: 'center' }}>
+            <div className="spinner-accent" />
           </div>
         ) : users.length === 0 ? (
-          <div className="p-8 text-center text-sm text-neutral-400">Nenhum aluno encontrado</div>
+          <div style={{ padding: 40, textAlign: 'center', fontSize: 13, color: '#444', fontFamily: 'var(--font-sans)' }}>
+            Nenhum aluno encontrado
+          </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-neutral-50 border-b border-neutral-100">
-                <tr>
-                  <th className="text-left px-4 py-3 font-medium text-neutral-600">Aluno</th>
-                  <th className="text-left px-4 py-3 font-medium text-neutral-600">Plano</th>
-                  <th className="text-left px-4 py-3 font-medium text-neutral-600">Status assinatura</th>
-                  <th className="text-center px-4 py-3 font-medium text-neutral-600">Conta</th>
-                  <th className="text-right px-4 py-3 font-medium text-neutral-600">Desde</th>
-                  <th className="px-4 py-3" />
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid #1a1a1a' }}>
+                  {['Aluno', 'Plano', 'Assinatura', 'Conta', 'Desde', ''].map((h, i) => (
+                    <th key={i} style={{
+                      padding:       '12px 20px',
+                      textAlign:     i === 3 ? 'center' : i === 4 || i === 5 ? 'right' : 'left',
+                      fontSize:      10,
+                      fontWeight:    600,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.1em',
+                      color:         '#444',
+                      fontFamily:    'var(--font-sans)',
+                      background:    '#0d0d0d',
+                    }}>{h}</th>
+                  ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-neutral-50">
-                {users.map((user) => (
-                  <tr key={user.id} className="hover:bg-neutral-50 transition-colors">
-                    <td className="px-4 py-3">
-                      <div>
-                        <p className="font-medium text-neutral-800">{user.name}</p>
-                        <p className="text-xs text-neutral-400">{user.email}</p>
-                      </div>
+              <tbody>
+                {users.map((user, i) => (
+                  <tr
+                    key={user.id}
+                    style={{ borderBottom: i < users.length - 1 ? '1px solid #161616' : 'none', transition: 'background 0.15s' }}
+                    onMouseEnter={e => (e.currentTarget as HTMLTableRowElement).style.background = '#141414'}
+                    onMouseLeave={e => (e.currentTarget as HTMLTableRowElement).style.background = 'transparent'}
+                  >
+                    {/* Aluno */}
+                    <td style={{ padding: '14px 20px' }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: '#F5F0E8', fontFamily: 'var(--font-sans)' }}>{user.name}</div>
+                      <div style={{ fontSize: 11, color: '#555', fontFamily: 'var(--font-sans)', marginTop: 2 }}>{user.email}</div>
                     </td>
-                    <td className="px-4 py-3 text-neutral-600">
-                      {user.subscription?.plan?.name ?? <span className="text-neutral-300">—</span>}
+
+                    {/* Plano */}
+                    <td style={{ padding: '14px 20px', fontSize: 13, color: '#888', fontFamily: 'var(--font-sans)' }}>
+                      {user.subscription?.plan?.name ?? <span style={{ color: '#333' }}>—</span>}
                     </td>
-                    <td className="px-4 py-3">
-                      {user.subscription?.is_active ? (
-                        <span className="badge-success">Ativa</span>
-                      ) : user.subscription?.status === 'pending' ? (
-                        <span className="badge-warning">Pendente</span>
-                      ) : (
-                        <span className="badge-neutral">Inativa</span>
-                      )}
+
+                    {/* Status assinatura */}
+                    <td style={{ padding: '14px 20px' }}>
+                      {user.subscription?.is_active
+                        ? <span style={badgeStyle('#22c55e')}>Ativa</span>
+                        : user.subscription?.status === 'pending'
+                          ? <span style={badgeStyle('#f59e0b')}>Pendente</span>
+                          : <span style={badgeStyle('#444')}>Inativa</span>
+                      }
                     </td>
-                    <td className="px-4 py-3 text-center">
+
+                    {/* Toggle conta */}
+                    <td style={{ padding: '14px 20px', textAlign: 'center' }}>
                       <button
                         onClick={() => toggleActive(user)}
-                        className={cn(
-                          'p-1.5 rounded-lg transition-colors',
-                          user.is_active
-                            ? 'text-green-500 hover:bg-green-50'
-                            : 'text-neutral-300 hover:bg-neutral-100'
-                        )}
-                        title={user.is_active ? 'Desativar' : 'Ativar'}
+                        title={user.is_active ? 'Desativar conta' : 'Ativar conta'}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, display: 'inline-flex', color: user.is_active ? '#22c55e' : '#333', transition: 'color 0.15s' }}
+                        onMouseEnter={e => (e.currentTarget.style.color = user.is_active ? '#16a34a' : '#5B8CF5')}
+                        onMouseLeave={e => (e.currentTarget.style.color = user.is_active ? '#22c55e' : '#333')}
                       >
                         {user.is_active ? <UserCheck size={16} /> : <UserX size={16} />}
                       </button>
                     </td>
-                    <td className="px-4 py-3 text-right text-xs text-neutral-400">
+
+                    {/* Data */}
+                    <td style={{ padding: '14px 20px', fontSize: 12, color: '#444', fontFamily: 'var(--font-sans)', textAlign: 'right' }}>
                       {formatDate(user.created_at)}
                     </td>
-                    <td className="px-4 py-3 text-right">
+
+                    {/* Link detalhe */}
+                    <td style={{ padding: '14px 20px', textAlign: 'right' }}>
                       <Link
                         href={`/admin/alunos/${user.id}`}
-                        className="p-1.5 rounded-lg hover:bg-neutral-100 text-neutral-400 hover:text-neutral-700 inline-flex"
+                        style={{ display: 'inline-flex', padding: 6, color: '#333', transition: 'color 0.15s' }}
+                        onMouseEnter={e => (e.currentTarget.style.color = '#5B8CF5')}
+                        onMouseLeave={e => (e.currentTarget.style.color = '#333')}
                       >
                         <ChevronRight size={16} />
                       </Link>
@@ -129,6 +193,13 @@ export default function StudentsPage() {
           </div>
         )}
       </div>
+
+      {/* Modal */}
+      <NovoAlunoModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        onSuccess={() => loadUsers('')}
+      />
     </div>
   )
 }
