@@ -4,7 +4,6 @@ import {
   createContext,
   useCallback,
   useContext,
-  useEffect,
   useState,
   type ReactNode,
 } from 'react'
@@ -26,7 +25,7 @@ const AuthContext = createContext<AuthContextValue | null>(null)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(false)
 
   const login = useCallback((token: string, userData: User) => {
     setToken(token)
@@ -52,11 +51,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  // Não tenta restaurar sessão automaticamente — token fica em memória
-  // O usuário precisa fazer login a cada sessão (seguro)
-  useEffect(() => {
-    setIsLoading(false)
-  }, [])
+  // Token fica em memória — sem restore assíncrono, isLoading inicia como false
 
   return (
     <AuthContext.Provider
