@@ -43,8 +43,12 @@ api.interceptors.response.use(
   async (error: AxiosError) => {
     if (error.response?.status === 401) {
       // Token expirado — limpar e redirecionar para login
+      // Exceto em rotas públicas onde o usuário não precisa estar autenticado
       clearToken()
-      if (typeof window !== 'undefined') {
+      if (
+        typeof window !== 'undefined' &&
+        !window.location.pathname.startsWith('/checkout')
+      ) {
         window.location.href = '/login'
       }
     }
