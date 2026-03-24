@@ -1,14 +1,13 @@
 'use client'
 
 import { Suspense, useEffect, useState } from 'react'
-import { useSearchParams, useRouter } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Check, ExternalLink, Loader2, Lock, Shield } from 'lucide-react'
 import api from '@/lib/api'
-import { useAuth } from '@/contexts/AuthContext'
 import { formatCurrency, cn } from '@/lib/utils'
 import type { Plan } from '@/types'
 import type { AxiosError } from 'axios'
@@ -24,8 +23,6 @@ type CheckoutForm = z.infer<typeof checkoutSchema>
 
 function CheckoutContent() {
   const searchParams = useSearchParams()
-  const router = useRouter()
-  const { isAuthenticated } = useAuth()
   const [plans, setPlans]             = useState<Plan[]>([])
   const [loadingPlans, setLoadingPlans] = useState(true)
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null)
@@ -64,18 +61,17 @@ function CheckoutContent() {
   async function onSubmit(data: CheckoutForm) {
     setApiError(null)
 
-    // Se não estiver autenticado, redirecionar para login
-    if (!isAuthenticated) {
-      router.push(`/login?redirect=${encodeURIComponent('/checkout?plan=' + data.plan_id)}`)
-      return
-    }
-
     try {
-      const res = await api.post<{ checkout_url: string | null; order_nsu: string }>('/student/checkout/infinitepay', { plan_id: data.plan_id })
-      if (!res.data.checkout_url) {
-        throw new Error('Missing checkout_url')
+      const res = await api.post<{ payment_url: string }>('/checkout', {
+        name:    data.name,
+        email:   data.email,
+        phone:   data.phone ?? null,
+        plan_id: data.plan_id,
+      })
+      if (!res.data.payment_url) {
+        throw new Error('Missing payment_url')
       }
-      window.location.href = res.data.checkout_url
+      window.location.href = res.data.payment_url
     } catch (err) {
       const error = err as AxiosError<{ message?: string; errors?: Record<string, string[]>; redirect?: string }>
       const redirect = error.response?.data?.redirect
